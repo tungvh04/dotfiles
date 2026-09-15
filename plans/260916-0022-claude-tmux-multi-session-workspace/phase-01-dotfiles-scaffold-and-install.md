@@ -13,6 +13,7 @@
 - Review status: not reviewed
 
 ## Key Insights
+- Update 2026-09-16: monorepo box is Ubuntu (apt) → dep-missing hints per distro (`pacman -S` / `apt install`); detect via `/etc/os-release`. Repo may go public → no company-specific content in tracked files.
 - Dotfiles already use GNU stow (folded dir symlink for nvim). Reuse stow; do not invent a symlinker.
 - `~/.local`, `~/.config` shared with other tools → stow with `--no-folding` so stow never turns `~/.local/lib` etc. into a symlink into dotfiles.
 - nvim and tmux are already stowed folded (`~/.config/nvim` and `~/.config/tmux` are dir symlinks into dotfiles, as of 2026-09-16). Keep both folded (skip `--no-folding` for them) to avoid unfold churn; `--no-folding` only for new pkgs touching `~/.local`.

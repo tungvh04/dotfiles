@@ -14,6 +14,7 @@
 - Review status: not reviewed
 
 ## Key Insights (verified docs)
+- Update 2026-09-16: monorepo box tmux may be 3.2a (Ubuntu 22.04) → `hyperlinks` terminal-feature only on tmux >=3.4 (version-guarded line in tmux.conf block below); popups/extkeys OK on 3.2.
 - settings shape: `"hooks": { "<Event>": [ { "matcher": "...", "hooks": [ { "type": "command", "command": "...", "timeout": 5 } ] } ] }`.
 - `Stop`, `UserPromptSubmit` take no matcher. `Notification` matcher values incl. `permission_prompt`, `idle_prompt`, `elicitation_dialog`. `SessionEnd` exists.
 - Exclude `idle_prompt` from ⏳: it fires ~after idle post-Stop and would overwrite ✅.
@@ -69,7 +70,8 @@ exit 0
 ```
 `tmux.conf`: **MODIFY the existing file** (added 2026-09-16, commit 4fc1a07 + uncommitted edits). It already has: prefix `C-a`, mouse, base-index 1, renumber, escape-time 10, focus-events, vi copy mode, `|`/`-` splits, hjkl panes, `prefix r` reload, `prefix s` fzf session switcher popup (`scripts/tmux-session-switcher-fzf.sh`, ctrl-r rename), and a One Dark status bar. Keep all of that and the palette. Add only these lines:
 ```tmux
-set -as terminal-features ',xterm*:RGB:extkeys:hyperlinks'
+set -as terminal-features ',xterm*:RGB:extkeys'
+if-shell "tmux -V | awk '{exit !(\$2+0 >= 3.4)}'" "set -as terminal-features ',xterm*:hyperlinks'"
 set -s extended-keys on
 set -g status-interval 2
 # inject state emoji into existing One Dark formats

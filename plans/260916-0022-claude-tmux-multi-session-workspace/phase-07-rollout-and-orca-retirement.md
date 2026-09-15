@@ -12,6 +12,7 @@
 - Review status: not reviewed
 
 ## Key Insights
+- Update 2026-09-16: monorepo box = Ubuntu, tmux not installed → `sudo apt install tmux stow jq fzf bats shellcheck` (+ lazygit release binary). commit-msg hook already present → skip hook install. Record `lsb_release -a`, `tmux -V`, `bazel --version` in precheck.
 - Laptop exercises core flow (new/go/close/rename/rm, hooks, review UX) cheaply; Bazel/Gerrit specifics only testable on monorepo box.
 - Real bottleneck is review bandwidth, not session count → guidance: ~3 sessions actively iterated at once; others closed (cost: disk only).
 - tmux server survives SSH disconnect; reboot kills windows but `cw go` resumes Claude conversations → verify explicitly.

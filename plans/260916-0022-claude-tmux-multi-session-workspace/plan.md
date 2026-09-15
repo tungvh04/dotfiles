@@ -46,14 +46,16 @@ Order: 1 → 2 → 3 → (4, 5 parallel) → 8 → 6 → 7. Write bats tests alo
 - Monorepo box: same + bazel/bazelisk; existing Gerrit API skill (reused for comments); Gerrit commit-msg hook.
 - Claude Code hooks: Notification (matcher), Stop, UserPromptSubmit, PostToolUse, SessionEnd (verified against code.claude.com/docs/en/hooks).
 
+## Answered (2026-09-16)
+- CW_ROOT = `~/cw` default (both machines).
+- Monorepo Bazel version unknown; repo `.bazelrc` likely sets own output location → ph3 `ls --size` must not assume md5 path (use `bazel info output_base` behind `--size`, cache per session); ph5 `~/.bazelrc` never sets `output_user_root`/`output_base`, skip `--disk_cache` if repo rc already sets it (home rc loads after workspace rc → would override team setting). Version precheck stays (ph5 step 1).
+- Gerrit commit-msg hook already installed on monorepo box → ph7 drops hook install; `cw push` Change-Id check stays as safety net.
+- Monorepo box: Ubuntu (apt), tmux NOT installed → ph7 `apt install tmux stow jq fzf bats shellcheck`; lazygit via GitHub release binary if not in apt. tmux version depends on Ubuntu release (22.04 = 3.2a: popups ok, no OSC 8 hyperlinks; 24.04 = 3.4 ok) → ph4 guard `hyperlinks` feature by version; ph8 links degrade to plain text. install.sh dep hints: pacman on Arch, apt on Ubuntu.
+- `cw rm` expunges Bazel output by default; `--keep-cache` opt-out.
+- CLAUDE.md is per repo type: team repos (monorepo) own committed CLAUDE.md → cw never edits it; personal layer = untracked `~/cw/<repo>/CLAUDE.md` (ancestor dir). Personal repos → commit own CLAUDE.md. Template = personal layer only.
+- dotfiles repo private, may go public → treat as public-ready: no company names, hostnames, Gerrit URLs, internal paths; machine-specific values only in untracked `~/.config/cw/config`.
+
 ## Unresolved questions
-1. `CW_ROOT` default `~/cw` OK? Monorepo box may need it on a specific big disk.
-2. ~~Claude project-dir encoding~~ Resolved 2026-09-16: `~/.claude/projects/` shows `/`→`-`. cw needs no encoding logic: run `claude --continue` in the worktree dir. Still to check in phase 2: whether `--continue` falls back to a fresh session when there is no history.
-3. Does `claude --continue -n <name>` keep/update display name? Is `/rename` available inside Claude? Verify.
-4. Bazel version on monorepo box: >=7.4 needed for `--experimental_disk_cache_gc_max_size`; any repo `.bazelrc` overriding `output_user_root`/`disk_cache` or using `--nohome_rc`?
-5. Gerrit remote name (`origin`?) and whether repo already installs commit-msg hook / sets `core.hooksPath`.
-6. ~~tmux prefix~~ Resolved: existing dotfiles tmux.conf uses `C-a`. Still open: tmux version on monorepo box (need >=3.4 for hyperlinks, >=3.2 popups).
-7. Second machine OS / package manager (stow, bats, shellcheck availability).
-8. Is team OK with a committed repo CLAUDE.md, or keep personal-only under `$CW_ROOT/<repo>/`?
-9. Is dotfiles remote public? Decides whether any monorepo-specific content may live there.
-10. `cw rm` in Bazel repos runs `bazel clean --expunge` by default — OK, or prefer opt-in?
+1. Exact Bazel version + repo `.bazelrc` flags on monorepo box → check at ph7 precheck (`bazel --version`, `cat .bazelversion`, `grep -nE 'output_user_root|output_base|disk_cache|nohome_rc' .bazelrc`).
+2. Ubuntu release on monorepo box (tmux version → hyperlinks) → `lsb_release -a` at ph7.
+3. (build-time) `claude --continue` with no history → fresh session? `-n` kept on continue? `/rename` exists?

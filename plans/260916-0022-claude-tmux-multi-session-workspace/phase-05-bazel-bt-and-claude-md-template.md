@@ -13,6 +13,7 @@
 - Review status: not reviewed
 
 ## Key Insights
+- Update 2026-09-16: repo `.bazelrc` likely sets own output location. `~/.bazelrc` loads AFTER workspace rc and overrides it → never set `output_user_root`/`output_base`; only add `--disk_cache` if repo rc has none. CLAUDE.md template = personal layer (`~/cw/<repo>/CLAUDE.md`); team monorepo CLAUDE.md untouched.
 - Each worktree = own output_base (md5 of path). Cold only on first build; stays warm while dir exists. Shared `--disk_cache` makes first build in a new worktree mostly cache hits; `--repository_cache` avoids re-downloading externals.
 - RAM: one Bazel JVM server per worktree that built recently; `startup --max_idle_secs` reaps idle ones → only active sessions hold memory. No cap on sessions (guidance, not limits).
 - Disk: disk_cache grows unbounded without GC → `--experimental_disk_cache_gc_max_size/_max_age` (Bazel >=7.4; flag name verified in docs, still `experimental_` prefix). Unknown flag on older Bazel breaks every build → verify version before stowing `bazel` pkg.

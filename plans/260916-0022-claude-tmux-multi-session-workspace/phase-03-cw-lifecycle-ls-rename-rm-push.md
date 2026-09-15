@@ -14,6 +14,7 @@
 - Review status: not reviewed
 
 ## Key Insights
+- Update 2026-09-16: monorepo `.bazelrc` likely overrides output location → md5 path guess unreliable. `--size` uses `bazel info output_base` (only under `--size`, tolerate slowness), fallback md5 guess for repos without custom rc. `rm` expunge default confirmed by user.
 - Dir never moves on rename: Bazel output_base keyed by md5(path), Claude history keyed by path. Rename = label + window name (+ optional branch).
 - `cw rm` must also drop Bazel output_base, else GBs orphaned: run `bazel clean --expunge` in the worktree before removal (skip with `--keep-cache` or if bazel missing → warn with path).
 - "Unpushed" in Gerrit flow can't use `origin/<branch>`. Record last pushed sha in `branch.<b>.cwpushed` on `cw push`; unpushed = `git cherry @{u} HEAD` has `+` lines AND HEAD != cwpushed. Patch-equivalent merged commits (`-`) count as pushed.
