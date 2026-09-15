@@ -3,7 +3,7 @@ title: "Claude tmux multi-session workspace (cw)"
 description: "Replace Orca with a tmux-based cw launcher: unlimited named persistent worktree sessions, Claude state in tmux bar, Gerrit push, Bazel-friendly."
 status: pending
 priority: P2
-effort: 21h
+effort: 22.5h
 branch: n/a
 tags: [infra, tooling, tmux, bazel, gerrit, claude-code]
 created: 2026-09-16
@@ -28,8 +28,9 @@ Input: [brainstorm report](../reports/brainstorm-260916-claude-tmux-workspace-se
 | 5 | Bazel rc, bt wrapper, CLAUDE.md template | Pending | 2h | [phase-05](./phase-05-bazel-bt-and-claude-md-template.md) |
 | 6 | Tests (bats) + shellcheck | Pending | 4h | [phase-06](./phase-06-tests-and-shellcheck.md) |
 | 7 | Rollout + Orca retirement | Pending | 1h (+2wk calendar) | [phase-07](./phase-07-rollout-and-orca-retirement.md) |
+| 8 | Clickable editor links (VS Code / IntelliJ), `cw code`/`cw idea` | Pending | 1.5h | [phase-08](./phase-08-clickable-editor-links.md) |
 
-Order: 1 → 2 → 3 → (4, 5 parallel) → 6 → 7. Write bats tests alongside 2/3 where cheap; phase 6 completes coverage.
+Order: 1 → 2 → 3 → (4, 5 parallel) → 8 → 6 → 7. Write bats tests alongside 2/3 where cheap; phase 6 completes coverage.
 
 ## Key decisions
 - Dir id fixed at creation; `rename` never moves dir (Bazel output_base = md5(workspace path); Claude history keyed by project path).
@@ -37,6 +38,7 @@ Order: 1 → 2 → 3 → (4, 5 parallel) → 6 → 7. Write bats tests alongside
 - Windows located by `@cw_path` option (stable), never by name.
 - Bazel cost handled by guidance: shared disk/repo cache, `--max_idle_secs`, `cw ls --size` warning, `cw new --from` recycling, `cw rm` expunges output_base.
 - Per-repo instructions: `$CW_ROOT/<repo>/CLAUDE.md` (Claude loads ancestor CLAUDE.md) so untracked personal file applies to every session.
+- Editor links: OSC 8 hyperlinks in `cw ls`/`new` (tty only) → `vscode://` (Remote-SSH when over SSH) + own allowlisted `idea://` handler; Konsole must allow escape links.
 - 1 session = 1 branch = 1 Gerrit change; `cw push` refuses chains unless `--chain`.
 
 ## Dependencies
