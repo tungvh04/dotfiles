@@ -1,7 +1,7 @@
 ---
 title: "Claude tmux multi-session workspace (cw)"
 description: "Replace Orca with a tmux-based cw launcher: unlimited named persistent worktree sessions, Claude state in tmux bar, Gerrit push, Bazel-friendly."
-status: pending
+status: in-progress
 priority: P2
 effort: 22.5h
 branch: n/a
@@ -21,9 +21,9 @@ Input: [brainstorm report](../reports/brainstorm-260916-claude-tmux-workspace-se
 
 | # | Phase | Status | Effort | Link |
 |---|-------|--------|--------|------|
-| 1 | Dotfiles scaffold, config, install.sh | Pending | 1.5h | [phase-01](./phase-01-dotfiles-scaffold-and-install.md) |
-| 2 | cw core + new / go / close | Pending | 5h | [phase-02](./phase-02-cw-core-new-go-close.md) |
-| 3 | cw ls / rename / rm / --from / push (Gerrit) | Pending | 5h | [phase-03](./phase-03-cw-lifecycle-ls-rename-rm-push.md) |
+| 1 | Dotfiles scaffold, config, install.sh | Done (stop A) | 1.5h | [phase-01](./phase-01-dotfiles-scaffold-and-install.md) |
+| 2 | cw core + new / go / close | Done (stop A) | 5h | [phase-02](./phase-02-cw-core-new-go-close.md) |
+| 3 | cw ls / rename / rm / --from / push (Gerrit) | In progress (rm done) | 5h | [phase-03](./phase-03-cw-lifecycle-ls-rename-rm-push.md) |
 | 4 | Claude hooks, tmux.conf, diff review UX | Pending | 2.5h | [phase-04](./phase-04-claude-hooks-tmux-and-review-ux.md) |
 | 5 | Bazel rc, bt wrapper, CLAUDE.md template | Pending | 2h | [phase-05](./phase-05-bazel-bt-and-claude-md-template.md) |
 | 6 | Tests (bats) + shellcheck | Pending | 4h | [phase-06](./phase-06-tests-and-shellcheck.md) |
@@ -59,3 +59,8 @@ Order: 1 → 2 → 3 → (4, 5 parallel) → 8 → 6 → 7. Write bats tests alo
 1. Exact Bazel version + repo `.bazelrc` flags on monorepo box → check at ph7 precheck (`bazel --version`, `cat .bazelversion`, `grep -nE 'output_user_root|output_base|disk_cache|nohome_rc' .bazelrc`).
 2. Ubuntu release on monorepo box (tmux version → hyperlinks) → `lsb_release -a` at ph7.
 3. (build-time) `claude --continue` with no history → fresh session? `-n` kept on continue? `/rename` exists?
+
+## Progress notes
+- 2026-10-04 stop A (ph1+2) built + installed on laptop. Deviations: labels read-only until ph3; Bazel detect → ph5; minimal `cw ls`; new tmux session starts with the task window (no scratch window); `load_config` uses `printf -v` (eval of `declare -p` in a function makes locals → env override broken). Verified `claude -n` + `--continue -n` flags exist (2.1.289); resume lookup uses realpath. shellcheck not run (not installed). Carry to ph3: refuse `cw new` when name is already a label.
+- 2026-10-05 extras built (not in original plan): `cw rm` pulled from ph3 (guards incl. gitignored files; Bazel expunge still ph5); bash completion (`cw/.local/share/bash-completion/completions/cw`, hidden `cw _names [open]`); repos without `origin` supported (only remote, or local-only → branch from local base); tmux `C-a w` restyled (colors/icons per level, windows collapsed); `C-a s` picker lists sessions + windows (tree, colors, preview right, ctrl-n/p, ctrl-r renames session or window). Tried + dropped: left-sidebar `C-a w` (temp pane), vim modes in `C-a s`.
+- Deferred to ph3 (user, 2026-10-05): session lookup by `@cw_repo` tag (session rename safe) + `cw rename` (window name and cw name in sync).

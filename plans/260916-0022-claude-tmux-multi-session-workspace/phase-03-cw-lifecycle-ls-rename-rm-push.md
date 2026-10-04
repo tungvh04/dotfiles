@@ -10,7 +10,7 @@
 - Date: 2026-09-16
 - Description: Lifecycle commands on top of phase-2 libs; Gerrit push safety; Bazel disk guidance.
 - Priority: P2
-- Implementation status: pending
+- Implementation status: in progress (`cw rm` done early 2026-10-05, minus Bazel expunge)
 - Review status: not reviewed
 
 ## Key Insights
@@ -24,9 +24,11 @@
 - Worktrees share `$(git rev-parse --git-common-dir)/hooks` → one commit-msg hook install covers all sessions (unless `core.hooksPath` set).
 
 ## Requirements
+- Update 2026-10-05 (user request): tmux session must be found by tag, not name. `cw new`/`go` locate the repo's session via session option `@cw_repo=<main repo dir>` (set on create); fall back to name `<repo>` only for untagged legacy sessions (then tag it). Renaming a session (e.g. `C-a s` ctrl-r) must not make the next `cw new` spawn a duplicate session. Windows already use `@cw_path`.
+- Update 2026-10-05: names drift today — window renamed in tmux (e.g. `porting-test-data`) while `cw ls`/completion still show the dir id (`testing`). `cw rename` closes the gap: label + window together. Consider: `cw ls` NAME column shows label, and a hint when the open window name differs from the label.
 - `cw ls [--size] [--plain]`: all repos under `$CW_ROOT`. Columns: `REPO/NAME  BRANCH  CHANGE  AGE  STATE  [SIZE]`. CHANGE = first 9 chars of `Change-Id` trailer of HEAD if HEAD ahead of `@{u}`, else `-`. AGE = `git log -1 --format=%cr`. STATE = `@claude_state` emoji if window open, `open` if open w/o state, `closed`. `--size`: worktree `du -sh` + Bazel output_base size (bazel repos); per-repo total; warn if > `CW_SIZE_WARN_GB`, suggest `cw rm`/`cw new --from`. `--plain` = TSV + dir column (fzf input). No `git status` in ls (slow on monorepo).
 - `cw rename <name> <new> [--branch]`: validate new; collision check within repo; set label (unset if new == id); `tmux rename-window` if open; `--branch`: `git branch -m old new` (refuse if target exists). Never touch dir. Print hint: run `/rename <new>` inside Claude if it is running (verify command exists).
-- `cw rm <name> [--force] [--keep-cache]`: refuse if window open (tell `cw close`) unless `--force` (then kill); refuse if dirty (`git status --porcelain` non-empty, untracked included) or unpushed unless `--force`; bazel repo → `bazel clean --expunge` in dir; `git worktree remove [--force] dir`; `git branch -D b`; `rmdir` empty repo dir.
+- DONE except `--keep-cache`/Bazel expunge (→ ph5): `cw rm <name> [--force] [--keep-cache]`: refuse if window open (tell `cw close`) unless `--force` (then kill); refuse if dirty (`git status --porcelain` non-empty, untracked included) or unpushed unless `--force`; bazel repo → `bazel clean --expunge` in dir; `git worktree remove [--force] dir`; `git branch -D b`; `rmdir` empty repo dir.
 - `cw new <name> [repo] --from <old>`: old in same repo, window closed, clean + pushed (or `--force`); in old dir: `fetch_base`; `git switch --track -c <name> origin/<base>`; `git branch -D <oldbranch>`; `label_set dir name name` (dir id stays old id → label required); window + fresh claude.
 - `cw new` tip (bazel repo only, cheap): if repo has closed sessions → `tip: cw new <name> --from <closed>` reuses warm build.
 - `cw push [--chain] [-- extra git push args]`: run in session dir (cwd). Must be on branch w/ upstream; commits ahead N>=1 else die; N>1 and no `--chain` → die (1 session = 1 change); every commit in `@{u}..HEAD` has `Change-Id:` trailer else die with hook install hint; warn if dirty; `git push "$remote" HEAD:refs/for/"$base" "$@"`; on success `git config branch.$b.cwpushed "$(git rev-parse HEAD)"`; print Gerrit URL lines from push output (already in stderr). Comment loop: document "use Gerrit skill", no code.
@@ -79,7 +81,10 @@ Relation-chain rule (doc in README + CLAUDE.md template): one session = one bran
 ## Todo List
 - [ ] cw_ls_rows + cmd_ls (+ --plain, --size, warning)
 - [ ] cmd_rename (label, window, --branch; dir untouched)
-- [ ] cmd_rm (guards, bazel expunge, worktree+branch removal)
+- [x] cmd_rm (guards, worktree+branch removal) — built 2026-10-05; extra guards from review: blocks on ignored *files* (.env etc., ignored dirs ok), only deletes the session's own branch (never base), non-fatal branch delete, tag/branch name clash safe
+- [ ] cmd_rm: Bazel expunge + `--keep-cache` (ph5, monorepo only)
+- [ ] Session lookup by `@cw_repo` tag (cw-tmux.sh `window_create`/session ensure), legacy name fallback + tag
+- [ ] cmd_rename: also `tmux rename-window` via `@cw_path`; completion (`cw _names`) picks up label automatically
 - [ ] cmd_new --from recycle + bazel tip
 - [ ] cmd_push (chain guard, Change-Id check, cwpushed)
 - [ ] README updates; shellcheck; each lib <200 lines
@@ -88,6 +93,7 @@ Relation-chain rule (doc in README + CLAUDE.md template): one session = one bran
 - `cw ls` lists sessions from 2+ repos in <1s for ~20 sessions (no --size).
 - rename: dir path + inode unchanged; window name + label updated; `--branch` renames branch, upstream kept.
 - rm refuses dirty/unpushed/open without `--force`; with `--force` dir, branch, output_base gone.
+- Rename session `ielts` → `foo`, then `cw new x` in ielts repo → window lands in `foo`, no new `ielts` session.
 - `--from`: same dir, new branch at `origin/<base>`, old branch deleted.
 - push: refs/for/<base> updated; missing Change-Id / chain → nonzero with hint.
 
