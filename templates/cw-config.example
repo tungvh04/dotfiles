@@ -1,0 +1,6 @@
+# cw config — machine specific, not tracked. Sourced by bash; env vars override it.
+CW_ROOT="$HOME/cw"            # sessions live in $CW_ROOT/<repo>/<name>
+CW_REMOTE=origin              # remote that new branches start from
+# CW_BASE=main                # base branch; else git config cw.base / <remote>/HEAD / main / master
+CW_CLAUDE_CMD=claude          # may include simple flags, e.g. "claude --model opus" (no quoted args)
+CW_FZF=fzf

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# cw — Claude workspace: one task = worktree + branch + tmux window + Claude conversation.
+# Sessions live in $CW_ROOT/<repo>/<name>; state is derived from git + tmux only.
+set -euo pipefail
+
+CW_LIB="$(dirname "$(readlink -f "$0")")/../lib/cw"
+for f in "$CW_LIB"/cw-*.sh; do
+  # shellcheck source=/dev/null
+  . "$f"
+done
+
+usage() {
+  cat <<'EOF'
+usage: cw <command> [args]
+
+  new <name> [repo-path] [-d]   new worktree + branch <name> from origin/<base>,
+                                open tmux window, start Claude
+  go [name|repo/name] [-d]      jump to a session (reopen + resume Claude if closed);
+                                no name = fzf picker
+  close <name|repo/name>        close the tmux window (worktree and branch are kept)
+  ls                            list sessions
+  rm <name|repo/name> [--force] delete worktree + branch; refuses if the window is
+                                open, changes are uncommitted, or commits would be lost
+
+  -d   do not switch/attach to the window (scripts)
+Config: ~/.config/cw/config (env vars win). Sessions: $CW_ROOT (default ~/cw).
+EOF
+}
+
+load_config
+case "${1:-}" in
+  new | go | close | ls | rm | _names)
+    cmd="$1"
+    shift
+    "cmd_$cmd" "$@"
+    ;;
+  -h | --help | help) usage ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

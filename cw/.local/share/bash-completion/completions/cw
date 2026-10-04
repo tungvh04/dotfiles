@@ -1,0 +1,54 @@
+# shellcheck shell=bash
+# bash completion for cw (auto-loaded by bash-completion from ~/.local/share).
+#   cw <TAB>               subcommands
+#   cw go|rm <TAB>         all session names (type "repo/" for repo/name forms)
+#   cw close <TAB>         only sessions with an open window
+#   cw new <name> <TAB>    directories (repo path)
+
+_cw() {
+  local cur="${COMP_WORDS[COMP_CWORD]}" sub="${COMP_WORDS[1]:-}"
+  COMPREPLY=()
+
+  if [ "$COMP_CWORD" -eq 1 ]; then
+    mapfile -t COMPREPLY < <(compgen -W "new go close ls rm" -- "$cur")
+    return
+  fi
+
+  local flags="" which="" field=1
+  case "$sub" in
+    go) flags="-d" ;;
+    rm) flags="--force" ;;
+    close) which=open ;;
+    new)
+      [[ "$cur" == -* ]] && mapfile -t COMPREPLY < <(compgen -W "-d" -- "$cur")
+      # 3rd word = optional repo path
+      [ "$COMP_CWORD" -eq 3 ] && [[ "$cur" != -* ]] && compopt -o dirnames
+      return
+      ;;
+    *) return ;;
+  esac
+
+  if [[ "$cur" == -* ]]; then
+    mapfile -t COMPREPLY < <(compgen -W "$flags" -- "$cur")
+    return
+  fi
+  # Complete the session name only once (first non-flag argument).
+  local i
+  for ((i = 2; i < COMP_CWORD; i++)); do
+    [[ "${COMP_WORDS[i]}" == -* ]] || return
+  done
+  # Bare names, except names used in several repos → repo/name (cw would reject
+  # the bare one as ambiguous). Typing "repo/" switches to repo/name for all.
+  # Matching is on the bare name (or repo/name once "/" is typed).
+  [[ "$cur" == */* ]] && field=2
+  mapfile -t COMPREPLY < <(cw _names $which 2>/dev/null | awk -F'\t' -v f="$field" -v cur="$cur" '
+    { name[NR] = $1; full[NR] = $2; seen[$1]++ }
+    END {
+      for (i = 1; i <= NR; i++) {
+        key = (f == 2 ? full[i] : name[i])
+        if (index(key, cur) == 1) print (f == 2 || seen[name[i]] > 1 ? full[i] : name[i])
+      }
+    }')
+}
+
+complete -F _cw cw
